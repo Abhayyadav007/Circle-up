@@ -1,0 +1,66 @@
+name: gate
+
+# Single required status check for merging into main.
+#
+# Branch protection (Settings → Branches → main) should require the **`gate / all-green`**
+# check. It always runs on PRs, runs only the affected suite(s) via path filtering,
+# and passes only when every triggered suite passed (or none needed to run).
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: gate-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      mobile: ${{ steps.filter.outputs.mobile }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - '.github/workflows/backend.yml'
+            mobile:
+              - 'mobile/**'
+              - '.github/workflows/mobile.yml'
+
+  backend:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    uses: ./.github/workflows/backend.yml
+    secrets: inherit
+
+  mobile:
+    needs: changes
+    if: needs.changes.outputs.mobile == 'true'
+    uses: ./.github/workflows/mobile.yml
+    secrets: inherit
+
+  all-green:
+    needs: [changes, backend, mobile]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify no suite failed or was cancelled
+        run: |
+          echo "backend: ${{ needs.backend.result }}"
+          echo "mobile:  ${{ needs.mobile.result }}"
+          for r in "${{ needs.backend.result }}" "${{ needs.mobile.result }}"; do
+            if [ "$r" = "failure" ] || [ "$r" = "cancelled" ]; then
+              echo "::error::a required suite did not pass"
+              exit 1
+            fi
+          done
+          echo "all required suites passed (or were skipped)"

@@ -1,0 +1,87 @@
+# Circleup local development stack.
+#
+#   docker compose up -d              # Postgres + backend (hot-reload)
+#   docker compose up -d postgres     # just the DB (run the API natively with `cargo run`)
+#   docker compose --profile tools run --rm migrate   # run SQLx migrations
+#
+# All credentials come from the repo-root `.env` (copy from `.env.example`).
+
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - circleup_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Optional: the Axum API with hot-reload. Skip it (`up -d postgres`) if you'd
+  # rather run `cargo run` on the host — the DATABASE_URL just changes host name.
+  backend:
+    build:
+      context: ./backend
+      target: dev
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: 8080
+      # How the mobile app reaches this container from the host. Override in
+      # `.env` if you run the app on a physical device (use your LAN IP).
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost:8080}
+      LOCAL_STORAGE_DIR: /app/uploads
+      # Inside the compose network the DB host is `postgres`, not `localhost`.
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      RUST_LOG: ${RUST_LOG:-info,circleup_backend=debug}
+      LOG_JSON: "false"
+      RUN_MIGRATIONS_ON_START: "true"
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_TTL_SECS: ${JWT_ACCESS_TTL_SECS:-900}
+      JWT_REFRESH_TTL_SECS: ${JWT_REFRESH_TTL_SECS:-2592000}
+      JWT_ISSUER: ${JWT_ISSUER:-circleup}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
+      R2_BUCKET: ${R2_BUCKET:-circleup-dev}
+      R2_PUBLIC_BASE_URL: ${R2_PUBLIC_BASE_URL:-}
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend:/app
+      # Keep the container's build cache off the host bind mount.
+      - circleup_cargo_target:/app/target
+      - circleup_cargo_registry:/usr/local/cargo/registry
+
+  # `docker compose --profile tools run --rm migrate`
+  migrate:
+    profiles: ["tools"]
+    image: rust:1-slim-bookworm
+    working_dir: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    volumes:
+      - ./backend:/app
+      - circleup_cargo_registry:/usr/local/cargo/registry
+    entrypoint: >
+      sh -c "cargo install sqlx-cli --no-default-features --features native-tls,postgres --locked
+      && sqlx migrate run --source ./migrations"
+
+volumes:
+  circleup_pgdata:
+  circleup_cargo_target:
+  circleup_cargo_registry:

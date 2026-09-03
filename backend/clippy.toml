@@ -1,0 +1,4 @@
+# Project-wide clippy configuration.
+# CI runs `cargo clippy --all-targets -- -D warnings`.
+too-many-arguments-threshold = 8
+type-complexity-threshold = 300

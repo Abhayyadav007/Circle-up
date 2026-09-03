@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "Circleup",
+    "slug": "circleup",
+    "scheme": "circleup",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#1D4ED8",
+      "resizeMode": "contain"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.circleup.mobile"
+    },
+    "android": {
+      "package": "app.circleup.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#1D4ED8"
+      }
+    },
+    "plugins": [
+      "expo-secure-store",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps._REPLACE_WITH_YOUR_IOS_CLIENT_ID"
+        }
+      ]
+    ],
+    "extra": {
+      "apiBaseUrl": "http://localhost:8080/api/v1",
+      "googleWebClientId": "",
+      "googleIosClientId": ""
+    }
+  }
+}
