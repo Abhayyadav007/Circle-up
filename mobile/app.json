@@ -27,14 +27,14 @@
       [
         "@react-native-google-signin/google-signin",
         {
-          "iosUrlScheme": "com.googleusercontent.apps._REPLACE_WITH_YOUR_IOS_CLIENT_ID"
+          "iosUrlScheme": "com.googleusercontent.apps.1nvbo5588id0a1qk9i8lj3oec0jpctc4"
         }
       ]
     ],
     "extra": {
-      "apiBaseUrl": "http://localhost:8080/api/v1",
-      "googleWebClientId": "",
-      "googleIosClientId": ""
+      "apiBaseUrl": "http://localhost:8090/api/v1",
+      "googleWebClientId": "589917772107-mav7dqh11bo6kdp14dj0easobo773ahk.apps.googleusercontent.com",
+      "googleIosClientId": "589917772107-1nvbo5588id0a1qk9i8lj3oec0jpctc4.apps.googleusercontent.com"
     }
   }
 }

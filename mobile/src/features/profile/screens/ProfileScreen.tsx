@@ -32,6 +32,17 @@ export function ProfileScreen() {
     enabled: Boolean(username) || Boolean(profile.data),
   });
 
+  if (profile.isError) {
+    return (
+      <Screen>
+        <View style={styles.errorBox}>
+          <Text color="danger">Couldn&apos;t load this profile.</Text>
+          <Button label="Retry" variant="outline" onPress={() => profile.refetch()} />
+        </View>
+      </Screen>
+    );
+  }
+
   if (profile.isLoading || !profile.data) {
     return (
       <Screen>
@@ -109,6 +120,7 @@ function Stat({ label, value }: { label: string; value: number }) {
 }
 
 const styles = StyleSheet.create({
+  errorBox: { alignItems: "center", gap: spacing.md, marginTop: spacing.xxl },
   grid: { padding: spacing.xs },
   header: { padding: spacing.lg, gap: spacing.md },
   identity: { flexDirection: "row", alignItems: "center", gap: spacing.lg },

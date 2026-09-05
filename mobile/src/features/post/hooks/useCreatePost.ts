@@ -4,6 +4,16 @@ import { queryKeys } from "@/api/queryClient";
 
 import { postApi, uploadToStorage } from "../api/postApi";
 
+/** Tags which of the 3 create-post steps threw, so the UI can show it. */
+async function step<T>(label: string, fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    const message = err && typeof err === "object" && "message" in err ? String(err.message) : String(err);
+    throw new Error(`[${label}] ${message}`);
+  }
+}
+
 type Input = {
   /** Local file URI from expo-image-picker. */
   fileUri: string;
@@ -21,9 +31,11 @@ export function useCreatePost() {
 
   return useMutation({
     mutationFn: async ({ fileUri, contentType, caption }: Input) => {
-      const presigned = await postApi.createUploadUrl(contentType);
-      await uploadToStorage(presigned, fileUri, contentType);
-      return postApi.create({ imageKey: presigned.key, caption });
+      const presigned = await step("requesting upload URL", () =>
+        postApi.createUploadUrl(contentType),
+      );
+      await step("uploading image", () => uploadToStorage(presigned, fileUri, contentType));
+      return step("saving post", () => postApi.create({ imageKey: presigned.key, caption }));
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.feed("home") });

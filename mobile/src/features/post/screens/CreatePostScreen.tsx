@@ -3,10 +3,18 @@ import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
 import { Image, Pressable, StyleSheet } from "react-native";
 
+import type { ApiError } from "@/api/client";
 import { Button, Input, Screen, Text } from "@/components/ui";
 import { colors, radius, spacing } from "@/theme";
 
 import { useCreatePost } from "../hooks/useCreatePost";
+
+function errorMessage(error: unknown): string {
+  if (error && typeof error === "object" && "message" in error) {
+    return String((error as ApiError | Error).message);
+  }
+  return "Try again.";
+}
 
 export function CreatePostScreen() {
   const nav = useNavigation();
@@ -65,7 +73,7 @@ export function CreatePostScreen() {
 
       {create.isError ? (
         <Text variant="caption" color="danger">
-          Couldn&apos;t share your post. Try again.
+          Couldn&apos;t share your post: {errorMessage(create.error)}
         </Text>
       ) : null}
 
