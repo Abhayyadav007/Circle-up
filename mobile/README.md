@@ -25,7 +25,8 @@ src/
 
 ```bash
 npm install
-npx expo start            # then press i (iOS) / a (Android)
+npx expo run:ios          # first time / after native deps change: builds + installs the dev build
+npx expo start            # day-to-day: Metro for the dev build (NOT Expo Go — it lacks Google Sign-In)
 npm run lint              # eslint, --max-warnings 0
 npm run typecheck         # tsc --noEmit --strict
 npm test                  # jest
@@ -35,8 +36,9 @@ npm test                  # jest
 
 The app reads `app.json` → `expo.extra` (see `src/config/env.ts`). Set:
 
-- `apiBaseUrl` — e.g. `http://localhost:8080/api/v1` (simulator),
-  `http://10.0.2.2:8080/api/v1` (Android emulator), or your LAN IP (device).
+- `apiBaseUrl` — e.g. `http://localhost:8090/api/v1` (simulator),
+  `http://10.0.2.2:8090/api/v1` (Android emulator), or your LAN IP (device).
+  Must match `PORT` in `backend/.env`.
 - `googleWebClientId` / `googleIosClientId` — see the root README's
   "Google Sign-In setup".
 

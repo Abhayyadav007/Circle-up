@@ -57,7 +57,7 @@ services:
       R2_BUCKET: ${R2_BUCKET:-circleup-dev}
       R2_PUBLIC_BASE_URL: ${R2_PUBLIC_BASE_URL:-}
     ports:
-      - "8080:8080"
+      - "8090:8080"
     volumes:
       - ./backend:/app
       # Keep the container's build cache off the host bind mount.
